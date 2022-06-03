@@ -1,0 +1,388 @@
+version: '3.8'
+
+services:
+  loki_distributor:
+    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    environment:
+      - TARGET=distributor
+    networks:
+      - overlay
+    ports:
+      - '9010:9010'
+    deploy:
+      mode: replicated
+      replicas: ${LOKI_DISTRIBUTOR_REPLICAS}
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.loki_distributor.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    hostname: '{{.Node.Hostname}}.{{.Task.ID}}'
+    env_file: ./loki/${ENV_FILE}
+    configs: 
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    command:
+      # List available targets
+      #- --list-targets
+      # Verify config file and exits
+      #- --verify-config
+      # yaml file to load
+      - --config.file=/etc/loki/loki.yml
+      # Expands ${var} in config according to the values of the environment variables.
+      - --config.expand-env=true
+      # Dump the entire Loki config object at Info log level with the order reversed, reversing the order makes viewing the entries easier in Grafana.
+      #- --log-config-reverse-order
+      # Output log messages in the given format. Valid formats: [logfmt, json] (default logfmt)
+      #- --log.format
+      # Dump the entire Loki config object to stderr
+      ##- --print-config-stderr
+      
+  loki_ingester:
+    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    environment:
+      - TARGET=ingester
+    networks:
+      - overlay
+    #ports:
+      #- '9012:9010'
+    deploy:
+      mode: replicated
+      replicas: ${LOKI_INGESTER_REPLICAS}
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.loki_ingester.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    hostname: '{{.Node.Hostname}}.{{.Task.ID}}'
+    env_file: ./loki/${ENV_FILE}
+    configs: 
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    command:
+      #- --list-targets
+      # Verify config file and exits
+      #- --verify-config
+      # yaml file to load
+      - --config.file=/etc/loki/loki.yml
+      # Expands ${var} in config according to the values of the environment variables.
+      - --config.expand-env=true
+      # Dump the entire Loki config object at Info log level with the order reversed, reversing the order makes viewing the entries easier in Grafana.
+      #- --log-config-reverse-order
+      # Output log messages in the given format. Valid formats: [logfmt, json] (default logfmt)
+      #- --log.format
+      # Dump the entire Loki config object to stderr
+      ##- --print-config-stderr
+      
+  loki_querier:
+    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    environment:
+      - TARGET=querier
+    networks:
+      - overlay
+    #ports:
+      #- '9013:9010'
+    deploy:
+      mode: replicated
+      replicas: ${LOKI_QUERIER_REPLICAS}
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.loki_querier.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    hostname: '{{.Node.Hostname}}.{{.Task.ID}}'
+    env_file: ./loki/${ENV_FILE}
+    configs: 
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    command:
+      #- --list-targets
+      # Verify config file and exits
+      #- --verify-config
+      # yaml file to load
+      - --config.file=/etc/loki/loki.yml
+      # Expands ${var} in config according to the values of the environment variables.
+      - --config.expand-env=true
+      # Dump the entire Loki config object at Info log level with the order reversed, reversing the order makes viewing the entries easier in Grafana.
+      #- --log-config-reverse-order
+      # Output log messages in the given format. Valid formats: [logfmt, json] (default logfmt)
+      #- --log.format
+      # Dump the entire Loki config object to stderr
+      #- --print-config-stderr
+      
+  loki_query_frontend:
+    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    environment:
+      - TARGET=query-frontend
+    networks:
+      - overlay
+    ports:
+      - '9011:9010'
+    deploy:
+      mode: replicated
+      replicas: ${LOKI_QUERY_FRONTEND_REPLICAS}
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.loki_query_frontend.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    hostname: '{{.Node.Hostname}}.{{.Task.ID}}'
+    env_file: ./loki/${ENV_FILE}
+    configs: 
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    command:
+      #- --list-targets
+      # Verify config file and exits
+      #- --verify-config
+      # yaml file to load
+      - --config.file=/etc/loki/loki.yml
+      # Expands ${var} in config according to the values of the environment variables.
+      - --config.expand-env=true
+      # Dump the entire Loki config object at Info log level with the order reversed, reversing the order makes viewing the entries easier in Grafana.
+      #- --log-config-reverse-order
+      # Output log messages in the given format. Valid formats: [logfmt, json] (default logfmt)
+      #- --log.format
+      # Dump the entire Loki config object to stderr
+      #- --print-config-stderr
+      
+  loki_query_scheduler:
+    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    environment:
+      - TARGET=query-scheduler
+    networks:
+      - overlay
+    #ports:
+      #- '9014:9010'
+    deploy:
+      mode: replicated
+      replicas: ${LOKI_QUERY_SCHEDULER}
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.loki_query_scheduler.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    hostname: '{{.Node.Hostname}}.{{.Task.ID}}'
+    env_file: ./loki/${ENV_FILE}
+    configs:
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    command:
+      #- --list-targets
+      # Verify config file and exits
+      #- --verify-config
+      # yaml file to load
+      - --config.file=/etc/loki/loki.yml
+      # Expands ${var} in config according to the values of the environment variables.
+      - --config.expand-env=true
+      # Dump the entire Loki config object at Info log level with the order reversed, reversing the order makes viewing the entries easier in Grafana.
+      #- --log-config-reverse-order
+      # Output log messages in the given format. Valid formats: [logfmt, json] (default logfmt)
+      #- --log.format
+      # Dump the entire Loki config object to stderr
+      #- --print-config-stderr
+      
+  loki_table_manager:
+    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    environment:
+      - TARGET=table-manager
+    networks:
+      - overlay
+    #ports:
+      #- '9015:9010'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.loki_table_manager.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    hostname: '{{.Node.Hostname}}.{{.Task.ID}}'
+    env_file: ./loki/${ENV_FILE}
+    configs: 
+      - source: loki_config
+        target: /etc/loki/loki.yml
+    command:
+      #- --list-targets
+      # Verify config file and exits
+      #- --verify-config
+      # yaml file to load
+      - --config.file=/etc/loki/loki.yml
+      # Expands ${var} in config according to the values of the environment variables.
+      - --config.expand-env=true
+      # Dump the entire Loki config object at Info log level with the order reversed, reversing the order makes viewing the entries easier in Grafana.
+      #- --log-config-reverse-order
+      # Output log messages in the given format. Valid formats: [logfmt, json] (default logfmt)
+      #- --log.format
+      # Dump the entire Loki config object to stderr
+      #- --print-config-stderr
+      
+  promtail:
+    image: harbor.danal.co.kr/docker_hub/grafana/promtail:2.5.0
+    networks:
+      - overlay
+    ports:
+      - target: 9096
+        published: 9096
+        mode: host
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.promtail.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 1m
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    hostname: '{{.Node.Hostname}}'
+    env_file: ./promtail/${ENV_FILE}
+    configs: 
+      - source: promtail_config
+        target: /etc/promtail/config.yml
+      - source: promtail_file_sd
+        target: /etc/promtail/sd_configs/file/application.yml
+    volumes:
+      - promtail:/var/log/position
+      - /home/system/logs:/var/log/promtail/
+    command:
+      # yaml file to load
+      - -config.file=/etc/promtail/config.yml
+      # Expands ${var} in config according to the values of the environment variables.
+      - -config.expand-env=true
+      # Start Promtail but print entries instead of sending them to Loki.
+      #- -dry-run
+      # Allows for detailed inspection of pipeline stages
+      #- -inspect
+      # Dump the entire Loki config object to stderr
+      #- -print-config-stderr
+      # Dump the entire Loki config object at Info log level with the order reversed, reversing the order makes viewing the entries easier in Grafana.
+      #- -log-config-reverse-order
+
+  consul:
+    image: harbor.danal.co.kr/docker_hub/library/consul:1.10.4
+    environment:
+      CONSUL_BIND_INTERFACE: eth0
+    networks:
+      - overlay
+    #ports:
+      #- '8501:8500'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.consul.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+        max_attempts: 5
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    volumes:
+      - consul:/consul/data
+      
+  cassandra:
+    image: harbor.danal.co.kr/docker_hub/library/cassandra:3.11.11
+    networks:
+      - overlay
+    #ports:
+      #- '9043:9042'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - 'node.platform.os == linux'
+          - 'node.labels.loki_stack.cassandra.deployable == true'
+      restart_policy:
+        condition: any
+        delay: 30s
+        max_attempts: 5
+    configs:
+      - source: cassandra_init_shell
+        target: /cassandra-init.sh
+        mode: 0544
+    volumes:
+      - cassandra:/var/lib/cassandra
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '5'
+    entrypoint: ["./cassandra-init.sh"] 
+    
+networks:
+  overlay:
+    driver: overlay
+    
+volumes:
+  promtail:
+  consul:
+  cassandra:
+  
+configs:
+  # loki component
+  loki_config:
+    file: ./loki/loki.yml
+    
+  # promtail
+  promtail_config:
+    file: ./promtail/config.yml
+  promtail_file_sd:
+    file: ./promtail/sd_configs/file/application.yml
+    
+  # cassandra
+  cassandra_init_shell:
+    file: ./cassandra/init.sh

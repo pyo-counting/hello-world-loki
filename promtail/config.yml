@@ -1,0 +1,198 @@
+# Configures the server for Promtail.
+server:
+  # Disable the HTTP and GRPC server.
+  disable: false
+  
+  # HTTP server listen host
+  http_listen_address: ""
+  
+  # HTTP server listen port (0 means random port)
+  http_listen_port: 9096
+  
+  # gRPC server listen host
+  grpc_listen_address: ""
+  
+  # gRPC server listen port (0 means random port)
+  grpc_listen_port: 9095
+  
+  # Register instrumentation handlers (/metrics, etc.)
+  register_instrumentation: true
+  
+  # Timeout for graceful shutdowns
+  graceful_shutdown_timeout: 30s
+  
+  # Read timeout for HTTP server
+  http_server_read_timeout: 30s
+  
+  # Write timeout for HTTP server
+  http_server_write_timeout: 30s
+  
+  # Idle timeout for HTTP server
+  http_server_idle_timeout: 120s
+  
+  # Max gRPC message size that can be received
+  grpc_server_max_recv_msg_size: 4194304
+  
+  # Max gRPC message size that can be sent
+  grpc_server_max_send_msg_size: 4194304
+  
+  # Limit on the number of concurrent streams for gRPC calls (0 = unlimited)
+  grpc_server_max_concurrent_streams: 100
+  
+  # Log only messages with the given severity or above. Supported values [debug,
+  # info, warn, error]
+  log_level: ${log_level}
+  
+  # Base path to server all API routes from (e.g., /v1/).
+  #[http_path_prefix: <string>]
+  
+  # Target managers check flag for Promtail readiness, if set to false the check is ignored
+  health_check_target: true
+  
+# Describes how Promtail connects to multiple instances
+# of Grafana Loki, sending logs to each.
+# WARNING: If one of the remote Loki servers fails to respond or responds
+# with any error which is retryable, this will impact sending logs to any
+# other configured remote Loki servers.  Sending is done on a single thread!
+# It is generally recommended to run multiple Promtail clients in parallel
+# if you want to send to multiple remote Loki instances.
+clients:
+    # The URL where Loki is listening, denoted in Loki as http_listen_address and
+    # http_listen_port. If Loki is running in microservices mode, this is the HTTP
+    # URL for the Distributor. Path to the push API needs to be included.
+    # Example: http://example.com:3100/loki/api/v1/push
+  - url: ${url}
+    
+    # The tenant ID used by default to push logs to Loki. If omitted or empty
+    # it assumes Loki is running in single-tenant mode and no X-Scope-OrgID header
+    # is sent.
+    tenant_id: ${tenant_id}
+    
+    # Maximum amount of time to wait before sending a batch, even if that
+    # batch isn't full.
+    batchwait: 1s
+    
+    # Maximum batch size (in bytes) of logs to accumulate before sending
+    # the batch to Loki.
+    batchsize: 1048576
+    
+    # Configures how to retry requests to Loki when a request
+    # fails.
+    # Default backoff schedule:
+    # 0.5s, 1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s(4.267m)
+    # For a total time of 511.5s(8.5m) before logs are lost
+    backoff_config:
+      # Initial backoff time between retries
+      min_period: 500ms
+      
+      # Maximum backoff time between retries
+      max_period: 5m
+      
+      # Maximum number of retries to do
+      max_retries: 10
+      
+    # Static labels to add to all logs being sent to Loki.
+    # Use map like {"foo": "bar"} to add a label foo with
+    # value bar.
+    # These can also be specified from command line:
+    # -client.external-labels=k1=v1,k2=v2
+    # (or --client.external-labels depending on your OS)
+    # labels supplied by the command line are applied
+    # to all clients configured in the `clients` section.
+    # NOTE: values defined in the config file will replace values
+    # defined on the command line for a given client if the
+    # label keys are the same.
+    external_labels:
+      hostname: ${HOSTNAME}
+    
+    # Maximum time to wait for a server to respond to a request
+    timeout: 10s
+    
+    # A comma-separated list of labels to include in the stream lag metric `promtail_stream_lag_seconds`.
+    # The default value is "filename". A "host" label is always included.
+    # The stream lag metric indicates which streams are falling behind on writes to Loki;
+    # be mindful about using too many labels, as it can increase cardinality.
+    stream_lag_labels: "filename"
+    
+# Describes how to save read file offsets to disk
+positions:
+  # Location of positions file
+  filename: "/var/log/position/positions.yaml"
+  
+  # How often to update the positions file
+  sync_period: 10s
+  
+  # Whether to ignore & later overwrite positions files that are corrupted
+  #[ignore_invalid_yaml: <boolean> | default = false]
+  
+scrape_configs:
+    # Name to identify this scrape config in the Promtail UI.
+  - job_name: application
+    # Describes how to transform logs from targets.
+    pipeline_stages:
+      - multiline:
+          firstline: '^\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2}:\d{1,2}'
+          max_wait_time: 3s
+          
+      - regex:
+          expression: '^(?P<time>\d{4}-\d{2}-\d{2} \d{1,2}:\d{1,2}:\d{1,2}(?:\.|,)\d{0,3})'
+      - template:
+          source: time
+          template: '{{ .Value }}+0900'
+      - timestamp:
+          source: time
+          format: '2006-01-02 15:04:05.000-0700'
+          
+      # delete directory path for filename label
+      - regex:
+          source: filename
+          expression: '^.*/(?P<filename>.*\.log)$'
+      - labels:
+          filename:
+          
+      # add application label from filename label
+      - regex:
+          source: filename
+          expression: '^(?P<application>.*)\.log$'
+      - labels:
+          application:
+          
+    # Describes how to receive logs via the Loki push API, (e.g. from other Promtails or the Docker Logging Driver)
+    #[loki_push_api: <loki_push_api_config>]
+    
+    # Describes how to relabel targets to determine if they should
+    # be processed.
+    #relabel_configs:
+      #- [<relabel_config>]
+        
+    # Files containing targets to scrape.
+    file_sd_configs:
+        # Patterns for files from which target groups are extracted.
+      - files:
+        - /etc/promtail/sd_configs/file/application.yml
+        
+        # Refresh interval to re-read the files.
+        refresh_interval: 5m
+        
+# Configures global limits for this instance of Promtail
+limits_config:
+  # When true, enforces rate limiting on this instance of Promtail.
+  readline_rate_enabled: false
+  
+  # The rate limit in log lines per second that this instance of Promtail may push to Loki.
+  #[readline_rate: <int> | default = 10000]
+  
+  # The cap in the quantiutyu of burst lines that this instance of Promtail may push
+  # to Loki
+  #[readline_burst: <int> | default = 10000]
+  
+  # When true, exceeding the rate limit causes this instance of Promtail to discard
+  # log lines, rather than sending them to Loki. When false, exceeding the rate limit
+  # causes this instance of Promtail to temporarily hold off on sending the log lines and retry later.
+  #[readline_rate_drop: <bool> | default = true]
+  
+# Configures how tailed targets will be watched.
+target_config:
+  # Period to resync directories being watched and files being tailed to discover
+  # new ones or stop watching removed ones.
+  sync_period: "10s"

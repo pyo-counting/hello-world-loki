@@ -1,0 +1,4 @@
+- targets:
+  - localhost
+  labels:
+    __path__: /var/log/promtail/**/*.log
