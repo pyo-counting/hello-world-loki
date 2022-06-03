@@ -291,7 +291,7 @@ services:
         target: /etc/promtail/sd_configs/file/application.yml
     volumes:
       - promtail:/var/log/position
-      - /home/system/logs:/var/log/promtail/
+      - ${LOG_DIR}:/var/log/promtail/
     command:
       # yaml file to load
       - -config.file=/etc/promtail/config.yml
