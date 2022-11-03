@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   loki_distributor:
-    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    image: harbor.pyoseyeol.co.kr/docker_hub/grafana/loki:2.5.0
     environment:
       - TARGET=distributor
     networks:
@@ -46,7 +46,7 @@ services:
       ##- --print-config-stderr
       
   loki_ingester:
-    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    image: harbor.pyoseyeol.co.kr/docker_hub/grafana/loki:2.5.0
     environment:
       - TARGET=ingester
     networks:
@@ -89,7 +89,7 @@ services:
       ##- --print-config-stderr
       
   loki_querier:
-    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    image: harbor.pyoseyeol.co.kr/docker_hub/grafana/loki:2.5.0
     environment:
       - TARGET=querier
     networks:
@@ -132,7 +132,7 @@ services:
       #- --print-config-stderr
       
   loki_query_frontend:
-    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    image: harbor.pyoseyeol.co.kr/docker_hub/grafana/loki:2.5.0
     environment:
       - TARGET=query-frontend
     networks:
@@ -175,7 +175,7 @@ services:
       #- --print-config-stderr
       
   loki_query_scheduler:
-    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    image: harbor.pyoseyeol.co.kr/docker_hub/grafana/loki:2.5.0
     environment:
       - TARGET=query-scheduler
     networks:
@@ -218,7 +218,7 @@ services:
       #- --print-config-stderr
       
   loki_table_manager:
-    image: harbor.danal.co.kr/docker_hub/grafana/loki:2.5.0
+    image: harbor.pyoseyeol.co.kr/docker_hub/grafana/loki:2.5.0
     environment:
       - TARGET=table-manager
     networks:
@@ -261,7 +261,7 @@ services:
       #- --print-config-stderr
       
   promtail:
-    image: harbor.danal.co.kr/docker_hub/grafana/promtail:2.5.0
+    image: harbor.pyoseyeol.co.kr/docker_hub/grafana/promtail:2.5.0
     networks:
       - overlay
     ports:
@@ -307,7 +307,7 @@ services:
       #- -log-config-reverse-order
 
   consul:
-    image: harbor.danal.co.kr/docker_hub/library/consul:1.10.4
+    image: harbor.pyoseyeol.co.kr/docker_hub/library/consul:1.10.4
     environment:
       CONSUL_BIND_INTERFACE: eth0
     networks:
@@ -334,7 +334,7 @@ services:
       - consul:/consul/data
       
   cassandra:
-    image: harbor.danal.co.kr/docker_hub/library/cassandra:3.11.11
+    image: harbor.pyoseyeol.co.kr/docker_hub/library/cassandra:3.11.11
     networks:
       - overlay
     #ports:
